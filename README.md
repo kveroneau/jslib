@@ -11,6 +11,5 @@ To use this, you will need a copy of MagicXML: https://github.com/t-davies/magic
 To use this, you will need vt100.js which can be found alongside ShellInABox.
 You can also obtain it from my website here: http://tech406.com/vt100.js
 
-
-Examples of using each of these will soon follow.
-
+Example projects can be found in my pas2js-experiments repo:
+https://github.com/kveroneau/pas2js-experiments
