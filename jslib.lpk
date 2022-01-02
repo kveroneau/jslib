@@ -26,7 +26,7 @@
     </CompilerOptions>
     <Description Value="A bunch of Pascal units for use with the pas2js compiler."/>
     <Version Minor="1"/>
-    <Files Count="4">
+    <Files Count="5">
       <Item1>
         <Filename Value="webvt100.pas"/>
         <UnitName Value="webvt100"/>
@@ -43,6 +43,10 @@
         <Filename Value="README.md"/>
         <Type Value="Text"/>
       </Item4>
+      <Item5>
+        <Filename Value="vtwidgets.pas"/>
+        <UnitName Value="vtwidgets"/>
+      </Item5>
     </Files>
     <RequiredPkgs Count="1">
       <Item1>
