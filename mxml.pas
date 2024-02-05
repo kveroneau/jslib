@@ -28,10 +28,13 @@ implementation
 procedure LoadXMLContent(target, xmlSource, xslSource: string);
 var
   content: TJSElement;
+  node: TJSNode;
 begin
   content:=document.getElementById(target);
   content.innerHTML:='';
-  content.appendChild(MagicXML.transform(xmlSource, xslSource));
+  node:=MagicXML.transform(xmlSource, xslSource);
+  WriteLn(node);
+  content.appendChild(node);
 end;
 
 end.

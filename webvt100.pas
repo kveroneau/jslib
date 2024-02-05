@@ -74,6 +74,9 @@ type
     procedure WriteLn(const data: string);
     procedure Clear;
     procedure MoveTo(row, col: Integer);
+    procedure EnableInput;
+    procedure LineInput(const prmpt: string; OnEnter: TProcString);
+    procedure PassInput(const prmpt: string; OnEnter: TProcString);
     property Mouse: Boolean write SetMouse;
     property OnPayload: TProcString read FOnPayload write FOnPayload;
     property Prompt: string read FPrompt write SetPrompt;
@@ -139,6 +142,30 @@ end;
 procedure TWebTerminal.MoveTo(row, col: Integer);
 begin
   Csi(IntToStr(row)+';'+IntToStr(col)+'H');
+end;
+
+procedure TWebTerminal.EnableInput;
+begin
+  FAcceptInput:=True;
+  if (FTermMode = tmNormal) and (FPrompt <> '') then
+    DrawPrompt;
+end;
+
+procedure TWebTerminal.LineInput(const prmpt: string; OnEnter: TProcString);
+begin
+  OnPayload:=OnEnter;
+  Mode:=tmNormal;
+  Prompt:=prmpt;
+  EnableInput;
+end;
+
+procedure TWebTerminal.PassInput(const prmpt: string; OnEnter: TProcString);
+begin
+  OnPayload:=OnEnter;
+  Mode:=tmNormal;
+  Mask:=True;
+  Prompt:=prmpt;
+  EnableInput;
 end;
 
 procedure TWebTerminal.SetupEvents;
@@ -228,6 +255,16 @@ begin
   if data = #26 then
   begin
     Ctrl('Z');
+    Exit;
+  end
+  else if data = #3 then
+  begin
+    Ctrl('C');
+    Exit;
+  end
+  else if data = #4 then
+  begin
+    Ctrl('D');
     Exit;
   end;
   if (Length(data) > 0) and (data[1] = #27) then
@@ -397,6 +434,10 @@ begin
     '21~': Ctrl('F10');
     '23~': Ctrl('F11');
     '24~': Ctrl('F12');
+    '2~': Ctrl('INS');
+    '3~': Ctrl('DEL');
+    '5~': Ctrl('PGUP');
+    '6~': Ctrl('PGDN');
   end;
 end;
 

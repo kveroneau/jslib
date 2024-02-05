@@ -19,6 +19,7 @@ type
   TJSTerminalOptions = Class external name 'Object' (TJSObject)
     greeting: string; external name 'greetings';
     height: integer; external name 'height';
+    width: integer; external name 'width';
     prompt: string; external name 'prompt';
     exit: boolean; external name 'exit';
     onInit: TOnInitCallback; external name 'onInit';
@@ -81,7 +82,6 @@ function InitTerminal(cntr: string; cmdCB: TCommandCallback; params: TJSTerminal
 begin
   params.onInit:=initCB;
   Result:=JQuery('#'+cntr).Terminal(cmdCB, params);
-  WriteLn('InitTerminal called.');
 end;
 
 function SimpleTerm: TJSTerminalOptions;

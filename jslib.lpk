@@ -25,8 +25,8 @@
       <SkipCompiler Value="True"/>
     </CompilerOptions>
     <Description Value="A bunch of Pascal units for use with the pas2js compiler."/>
-    <Version Minor="1"/>
-    <Files Count="5">
+    <Version Minor="4"/>
+    <Files Count="15">
       <Item1>
         <Filename Value="webvt100.pas"/>
         <UnitName Value="webvt100"/>
@@ -47,6 +47,46 @@
         <Filename Value="vtwidgets.pas"/>
         <UnitName Value="vtwidgets"/>
       </Item5>
+      <Item6>
+        <Filename Value="bulma.pas"/>
+        <UnitName Value="bulma"/>
+      </Item6>
+      <Item7>
+        <Filename Value="marked.pas"/>
+        <UnitName Value="marked"/>
+      </Item7>
+      <Item8>
+        <Filename Value="iui.pas"/>
+        <UnitName Value="iui"/>
+      </Item8>
+      <Item9>
+        <Filename Value="notifications.pas"/>
+        <UnitName Value="notifications"/>
+      </Item9>
+      <Item10>
+        <Filename Value="jsdosbox.pas"/>
+        <UnitName Value="jsdosbox"/>
+      </Item10>
+      <Item11>
+        <Filename Value="ajaxlib.pas"/>
+        <UnitName Value="ajaxlib"/>
+      </Item11>
+      <Item12>
+        <Filename Value="jsonlib.pas"/>
+        <UnitName Value="jsonlib"/>
+      </Item12>
+      <Item13>
+        <Filename Value="libvideojs.pas"/>
+        <UnitName Value="libvideojs"/>
+      </Item13>
+      <Item14>
+        <Filename Value="webscript.pas"/>
+        <UnitName Value="WebScript"/>
+      </Item14>
+      <Item15>
+        <Filename Value="qvfs.pas"/>
+        <UnitName Value="qvfs"/>
+      </Item15>
     </Files>
     <RequiredPkgs Count="1">
       <Item1>

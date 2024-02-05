@@ -19,6 +19,7 @@ type
   Private
     FState: TVTWidgetState;
     FWrite: TProcString;
+    FWriteLn: TProcString;
     {procedure doIdle; virtual; abstract;}
   Public
     constructor Create(AOwner: TComponent); override;
@@ -44,6 +45,7 @@ type
   Public
     constructor Create(AOwner: TComponent; msg: string; x,y: integer);
     constructor Create(AOwner: TComponent; msg: string; x,y: integer; OnComplete: TProc);
+    procedure Render; override;
   end;
 
   { TVTBSOD }
@@ -79,6 +81,42 @@ type
     procedure Render; override;
   end;
 
+  { TVTLine }
+
+  TVTLine = class(TVTLabel)
+  Public
+    procedure Render; override;
+  end;
+
+  { TVTButton }
+
+  TVTButton = class(TVTWidget)
+  Private
+    FLabel: String;
+    FPosition: TPoint;
+    FSize: integer;
+    FOnClick: TProc;
+  Public
+    constructor Create(AOwner: TComponent; const s: string; x,y: integer);
+    procedure Render; override;
+    procedure HandleMouse(const Button, Row, Col: integer); override;
+    property OnClick: TProc read FOnClick write FOnClick;
+  end;
+
+  { TVTIcon }
+
+  TVTIcon = class(TVTWidget)
+  Private
+    FLabel, FIcon: string;
+    FPosition: TPoint;
+    FOnClick: TProcString;
+  Public
+    constructor Create(AOwner: TComponent; const s, ico: string; x,y: integer);
+    procedure Render; override;
+    procedure HandleMouse(const Button, Row, Col: integer); override;
+    property OnClick: TProcString read FOnClick write FOnClick;
+  end;
+
   { TWidgetContainer }
 
   TWidgetContainer = class(TComponent)
@@ -99,6 +137,7 @@ type
     FTitle: String;
     FPosition: TRect;
     FCurPos: TPoint;
+    FBForeground, FBBackground: integer;
     procedure Draw;
   Public
     constructor Create(AOwner: TComponent; const title: string; x, y, w, h: integer);
@@ -109,7 +148,10 @@ type
     procedure HandleMouse(const Button, Row, Col: integer); override;
     procedure Render; override;
     procedure AddLabel(const s: string);
+    procedure AddLine(const s: string);
     property Position: TRect read FPosition;
+    property BorderForeground: integer read FBForeground write FBForeground;
+    property BorderBackground: integer read FBBackground write FBBackground;
   end;
 
   { TWindowManager }
@@ -151,17 +193,109 @@ type
     procedure CountDown(secs: integer; OnCountDown: TProc);
     procedure Center(const row: integer; const msg: string);
     procedure Clear;
+    procedure Render;
     property OnRefresh: TProc read FOnRefresh write FOnRefresh;
     property Inverse: boolean write SetInverse;
     property Widgets: TWidgetContainer read FWidgets;
+    property WebTerminal: TWebTerminal read FTerm;
   Protected
     procedure WidgetStateChange(Sender: TObject);
-    property WebTerminal: TWebTerminal read FTerm;
     property Foreground: integer read FForeground;
     property Background: integer read FBackground;
   end;
 
+  { TVTDesktop }
+
+  TVTDesktop = class(TVTWidget)
+  Private
+    FForeground, FBackground: integer;
+  Public
+    procedure Render; override;
+    property Foreground: Integer read FForeground write FForeground;
+    property Background: Integer read FBackground write FBackground;
+  end;
+
 implementation
+
+{ TVTIcon }
+
+constructor TVTIcon.Create(AOwner: TComponent; const s, ico: string; x,
+  y: integer);
+begin
+  inherited Create(AOwner);
+  FLabel:=s;
+  FIcon:=ico;
+  FPosition.x:=x;
+  FPosition.y:=y;
+end;
+
+procedure TVTIcon.Render;
+begin
+  FTerm.MoveTo(FPosition.x, FPosition.y);
+  FTerm.Write(FIcon);
+  if Length(FLabel) > Length(FIcon)+5 then
+    FTerm.MoveTo(FPosition.x+1, FPosition.y-2)
+  else
+    FTerm.MoveTo(FPosition.x+1, FPosition.y);
+  FTerm.Write(FLabel);
+end;
+
+procedure TVTIcon.HandleMouse(const Button, Row, Col: integer);
+begin
+  if not Assigned(FOnClick) then
+    Exit;
+  if (Button = 0) and (Row = FPosition.x) then
+    if (Col >= FPosition.y) and (Col <= FPosition.y+5) then
+      FOnClick(FLabel);
+end;
+
+{ TVTButton }
+
+constructor TVTButton.Create(AOwner: TComponent; const s: string; x, y: integer
+  );
+begin
+  inherited Create(AOwner);
+  FLabel:=s;
+  FPosition.x:=x;
+  FPosition.y:=y;
+  FSize:=FPosition.y+Length(s)+4;
+end;
+
+procedure TVTButton.Render;
+begin
+  FTerm.MoveTo(FPosition.x, FPosition.y);
+  FTerm.Write('[ '+FLabel+' ]');
+end;
+
+procedure TVTButton.HandleMouse(const Button, Row, Col: integer);
+begin
+  if not Assigned(FOnClick) then
+    Exit;
+  if (Button = 0) and (Row = FPosition.x) then
+    if (Col >= FPosition.y) and (Col <= FSize) then
+      FOnClick();
+end;
+
+{ TVTDesktop }
+
+procedure TVTDesktop.Render;
+begin
+  FTerm.Attr:=taForeground+FForeground;
+  FTerm.Attr:=taBackground+FBackground;
+  FTerm.Clear;
+end;
+
+{ TVTLine }
+
+procedure TVTLine.Render;
+var
+  w: integer;
+begin
+  w:=TVTWindow(Owner).Position.Right-1;
+  if Length(FLabel) > w then
+    SetLength(FLabel, w-1);
+  FWriteLn(FLabel);
+end;
 
 { TVTLabel }
 
@@ -196,12 +330,12 @@ begin
     if (Button = 0) and (Row = w.Position.Top) then
     begin
       if (Col >= w.Position.Left) and (Col < w.Position.Left+2) then
-      begin
-        w.Free;
-        Render;
-      end;
+        w.Free
+      else if (Col >= w.Position.Left) and (Col < (w.Position.Left+w.Position.Right)) then
+        FActiveWindow:=w;
+      FScreen.Render;
     end
-    else
+    else if FActiveWindow = w then
       w.HandleMouse(Button, Row, Col);
   end;
 end;
@@ -216,6 +350,12 @@ begin
     w:=TVTWindow(Components[i]);
     w.Render;
   end;
+  if w <> FActiveWindow then
+    try
+      FActiveWindow.Render;
+    except
+      FActiveWindow:=Nil;
+    end;
 end;
 
 { TWidgetContainer }
@@ -234,6 +374,7 @@ var
   frame: String;
   i: integer;
 begin
+  FScreen.SetColor(FBForeground, FBBackground);
   frame:=DupeString(' ', FPosition.Right);
   FTerm.MoveTo(FPosition.Top, FPosition.Left);
   FScreen.Inverse:=True;
@@ -263,6 +404,8 @@ begin
   FPosition.Top:=x;
   FPosition.Right:=w;
   FPosition.Bottom:=h;
+  FBForeground:=tcWhite;
+  FBBackground:=tcBlue;
 end;
 
 destructor TVTWindow.Destroy;
@@ -301,9 +444,11 @@ begin
 end;
 
 procedure TVTWindow.HandleMouse(const Button, Row, Col: integer);
+var
+  i: integer;
 begin
-  if (Button = 0) and (Row = FPosition.Top) and (Col = FPosition.Left+1) then
-    System.WriteLn('Window close requested!');
+  for i:=0 to ComponentCount-1 do
+    TVTWidget(Components[i]).HandleMouse(Button, Row, Col);
 end;
 
 procedure TVTWindow.Render;
@@ -314,6 +459,8 @@ begin
   Draw;
   for i:=0 to ComponentCount-1 do
   begin
+    if FCurPos.x > (FPosition.Top+FPosition.Bottom-2) then
+      Exit;
     w:=TVTWidget(Components[i]);
     w.Render;
   end;
@@ -322,6 +469,11 @@ end;
 procedure TVTWindow.AddLabel(const s: string);
 begin
   TVTLabel.Create(Self, s);
+end;
+
+procedure TVTWindow.AddLine(const s: string);
+begin
+  TVTLine.Create(Self, s);
 end;
 
 { TVTDataLabel }
@@ -379,11 +531,13 @@ begin
   if AOwner.ClassName = 'TWidgetContainer' then
   begin
     FWrite:=@FTerm.Write;
+    FWriteLn:=@FTerm.WriteLn;
   end
   else if AOwner.ClassName = 'TVTWindow' then
   begin
     w:=TVTWindow(AOwner);
     FWrite:=@w.write;
+    FWriteLn:=@w.writeln;
   end;
   FState:=wsActive;
 end;
@@ -415,7 +569,7 @@ begin
     FTimer.Enabled:=False;
     if Assigned(FOnComplete) then
       FOnComplete;
-    SetInactive;
+    {SetInactive;}
   end;
 end;
 
@@ -437,6 +591,15 @@ constructor TVTDramaPrint.Create(AOwner: TComponent; msg: string; x,
 begin
   Create(AOwner, msg, x, y);
   FOnComplete:=OnComplete;
+end;
+
+procedure TVTDramaPrint.Render;
+begin
+  if not FTimer.Enabled then
+  begin
+    FTerm.MoveTo(FPosition.x, FPosition.y);
+    FTerm.Write(FString.toString);
+  end;
 end;
 
 { TVTScreen }
@@ -528,7 +691,6 @@ begin
   FBackground:=bg;
   FTerm.Attr:=taForeground+FForeground;
   FTerm.Attr:=taBackground+FBackground;
-  Fterm.Clear;
 end;
 
 procedure TVTScreen.BSOD(const msg: string);
@@ -562,6 +724,14 @@ begin
     w.Free;
   end;
   FTerm.Clear;
+end;
+
+procedure TVTScreen.Render;
+var
+  i: integer;
+begin
+  for i:=0 to FWidgets.ComponentCount-1 do
+    TVTWidget(FWidgets.Components[i]).Render;
 end;
 
 procedure TVTScreen.WidgetStateChange(Sender: TObject);
