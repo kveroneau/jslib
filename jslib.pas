@@ -9,7 +9,7 @@ interface
 
 uses
   webvt100, jsterm, mxml, vtwidgets, bulma, marked, iui, notifications, 
-  jsdosbox, ajaxlib, jsonlib, libvideojs, WebScript, qvfs;
+  jsdosbox, ajaxlib, jsonlib, libvideojs, WebScript, qvfs, jsontable;
 
 implementation
 

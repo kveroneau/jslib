@@ -25,8 +25,8 @@
       <SkipCompiler Value="True"/>
     </CompilerOptions>
     <Description Value="A bunch of Pascal units for use with the pas2js compiler."/>
-    <Version Minor="4"/>
-    <Files Count="15">
+    <Version Minor="5"/>
+    <Files Count="16">
       <Item1>
         <Filename Value="webvt100.pas"/>
         <UnitName Value="webvt100"/>
@@ -87,6 +87,10 @@
         <Filename Value="qvfs.pas"/>
         <UnitName Value="qvfs"/>
       </Item15>
+      <Item16>
+        <Filename Value="jsontable.pas"/>
+        <UnitName Value="jsontable"/>
+      </Item16>
     </Files>
     <RequiredPkgs Count="1">
       <Item1>
