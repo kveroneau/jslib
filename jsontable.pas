@@ -26,6 +26,7 @@ type
     FFilter: string;
     function GetBooleans(AField: string): Boolean;
     function GetDataSet: TExtJSJSONDataSet;
+    function GetDates(AField: string): TDateTime;
     function GetInts(AField: string): Integer;
     function GetStrings(AField: string): string;
     procedure SetActive(AValue: Boolean);
@@ -33,6 +34,7 @@ type
     procedure SetDatafile(AValue: string);
     procedure OpenTable;
     procedure CloseTable;
+    procedure SetDates(AField: string; AValue: TDateTime);
     procedure SetFilter(AValue: string);
     procedure SetInts(AField: string; AValue: Integer);
     procedure SetStrings(AField: string; AValue: string);
@@ -47,6 +49,7 @@ type
     property Strings[AField: string]: string read GetStrings write SetStrings;
     property Ints[AField: string]: Integer read GetInts write SetInts;
     property Booleans[AField: string]: Boolean read GetBooleans write SetBooleans;
+    property Dates[AField: string]: TDateTime read GetDates write SetDates;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
@@ -80,6 +83,11 @@ begin
   if not FActive then
     raise ENoDataSet.Create('Dataset not available.');
   Result:=FDataSet;
+end;
+
+function TJSONTable.GetDates(AField: string): TDateTime;
+begin
+  Result:=FDataSet.FieldByName(AField).AsDateTime;
 end;
 
 function TJSONTable.GetBooleans(AField: string): Boolean;
@@ -121,6 +129,11 @@ end;
 procedure TJSONTable.CloseTable;
 begin
   FDataSet.Close;
+end;
+
+procedure TJSONTable.SetDates(AField: string; AValue: TDateTime);
+begin
+  FDataSet.FieldByName(AField).AsDateTime:=AValue;
 end;
 
 procedure TJSONTable.SetFilter(AValue: string);
