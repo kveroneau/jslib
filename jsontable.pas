@@ -8,7 +8,7 @@ unit jsontable;
 interface
 
 uses
-  Classes, SysUtils, p2jsres, Web, ExtJSDataset, JS;
+  Classes, SysUtils, p2jsres, Web, ExtJSDataset, JS, ajaxlib;
 
 type
 
@@ -24,6 +24,9 @@ type
     FDataSet: TExtJSJSONDataSet;
     FDatafile: string;
     FFilter: string;
+    FRequest: TWebRequest;
+    FOnSuccess: TJSOnReadyStateChangeHandler;
+    FOnFailure: TJSOnReadyStateChangeHandler;
     function GetBooleans(AField: string): Boolean;
     function GetDataSet: TExtJSJSONDataSet;
     function GetDates(AField: string): TDateTime;
@@ -32,6 +35,8 @@ type
     procedure SetActive(AValue: Boolean);
     procedure SetBooleans(AField: string; AValue: Boolean);
     procedure SetDatafile(AValue: string);
+    procedure ParseTable(data: string);
+    procedure ParseJSON;
     procedure OpenTable;
     procedure CloseTable;
     procedure SetDates(AField: string; AValue: TDateTime);
@@ -43,6 +48,8 @@ type
     function IntField(const AField: string): Integer;
   public
     property Active: Boolean read FActive write SetActive;
+    property OnSuccess: TJSOnReadyStateChangeHandler read FOnSuccess write FOnSuccess;
+    property OnFailure: TJSOnReadyStateChangeHandler read FOnFailure write FOnFailure;
     property Datafile: string read FDatafile write SetDatafile;
     property Filter: string read FFilter write SetFilter;
     property DataSet: TExtJSJSONDataSet read GetDataSet;
@@ -113,17 +120,45 @@ begin
   FDatafile:=AValue;
 end;
 
-procedure TJSONTable.OpenTable;
+procedure TJSONTable.ParseTable(data: string);
 var
-  info: TResourceInfo;
   json: TJSObject;
 begin
-  if not GetResourceInfo(rsJS, FDatafile, info) then
-    Exit;
-  json:=TJSJSON.parseObject(window.atob(info.data));
+  json:=TJSJSON.parseObject(data);
   FDataSet.MetaData:=TJSObject(json.Properties['metaData']);
   FDataSet.Rows:=TJSArray(json.Properties['Data']);
   FDataSet.Open;
+end;
+
+procedure TJSONTable.ParseJSON;
+begin
+  if not FRequest.Complete then
+    Exit;
+  if FRequest.Status <> 200 then
+  begin
+    if Assigned(FOnFailure) then
+      FOnFailure;
+  end
+  else
+  begin
+    ParseTable(FRequest.responseText);
+    if Assigned(FOnSuccess) then
+      FOnSuccess;
+  end;
+end;
+
+procedure TJSONTable.OpenTable;
+var
+  info: TResourceInfo;
+begin
+  if GetResourceInfo(rsJS, FDatafile, info) then
+    ParseTable(window.atob(info.data))
+  else
+  begin
+    FRequest:=TWebRequest.Create(Self, 'get', FDatafile+'.json');
+    FRequest.OnChange:=@ParseJSON;
+    FRequest.DoRequest;
+  end;
 end;
 
 procedure TJSONTable.CloseTable;

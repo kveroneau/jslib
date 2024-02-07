@@ -21,11 +21,13 @@ type
     function GetComplete: Boolean;
     function GetResponseText: string;
     function GetState: NativeInt;
+    function GetStatus: integer;
     procedure SetCallback(AValue: TJSOnReadyStateChangeHandler);
     procedure ProcessHeaders;
   public
     property OnChange: TJSOnReadyStateChangeHandler read FCallback write SetCallback;
     property readyState: NativeInt read GetState;
+    property Status: integer read GetStatus;
     property Complete: Boolean read GetComplete;
     property responseText: string read GetResponseText;
     constructor Create(AOwner: TComponent; AMethod, AURI: string);
@@ -127,6 +129,11 @@ end;
 function TWebRequest.GetState: NativeInt;
 begin
   Result:=FRequest.readyState;
+end;
+
+function TWebRequest.GetStatus: integer;
+begin
+  Result:=FRequest.Status;
 end;
 
 function TWebRequest.GetComplete: Boolean;
