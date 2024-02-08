@@ -15,6 +15,7 @@ type
   EJSONTable = class(Exception);
   EBadDatafile = class(EJSONTable);
   ENoDataSet = class(EJSONTable);
+  EBadTable = class(EJSONTable);
 
   { TJSONTable }
 
@@ -61,10 +62,104 @@ type
     destructor Destroy; override;
   end;
 
-var
-  DS: TExtJSJSONDataSet;
+  { TJSONDatabase }
+
+  TJSONDatabase = class(TComponent)
+  private
+    FActive: Boolean;
+    FJSON: TJSObject;
+    FOnFailure: TJSOnReadyStateChangeHandler;
+    FOnSuccess: TJSOnReadyStateChangeHandler;
+    FRequest: TWebRequest;
+    FDatafile: string;
+    function GetTable(ATable: string): TJSONTable;
+    function GetTables: TJSArray;
+    procedure SetActive(AValue: Boolean);
+    procedure parseJSON;
+    procedure ParseDatabase(data: string);
+  public
+    property Active: Boolean read FActive write SetActive;
+    property OnSuccess: TJSOnReadyStateChangeHandler read FOnSuccess write FOnSuccess;
+    property OnFailure: TJSOnReadyStateChangeHandler read FOnFailure write FOnFailure;
+    property Datafile: string read FDatafile write FDatafile;
+    property TableNames: TJSArray read GetTables;
+    property Table[ATable: string]: TJSONTable read GetTable;
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+  end;
 
 implementation
+
+{ TJSONDatabase }
+
+procedure TJSONDatabase.SetActive(AValue: Boolean);
+begin
+  if FActive=AValue then Exit;
+  if AValue and (FDatafile = '') then
+    raise EBadDatafile.Create('Datafile is not set.');
+  if AValue then
+  begin
+    FRequest:=TWebRequest.Create(Self, 'get', FDatafile+'.json');
+    FRequest.OnChange:=@parseJSON;
+    FRequest.DoRequest;
+  end;
+  FActive:=AValue;
+end;
+
+function TJSONDatabase.GetTables: TJSArray;
+begin
+  Result:=TJSArray(FJSON.Properties['tables']);
+end;
+
+function TJSONDatabase.GetTable(ATable: string): TJSONTable;
+var
+  tbl: TJSObject;
+begin
+  if not GetTables.includes(ATable) then
+    raise EBadTable.Create('Table does not exist: '+ATable);
+  tbl:=TJSObject(FJSON.Properties[ATable]);
+  Result:=TJSONTable.Create(Self);
+  with Result.FDataSet do
+  begin
+    MetaData:=TJSObject(tbl.Properties['metaData']);
+    Rows:=TJSArray(tbl.Properties['Data']);
+    Open;
+  end;
+  Result.FActive:=True;
+end;
+
+procedure TJSONDatabase.parseJSON;
+begin
+  if not FRequest.Complete then
+    Exit;
+  if FRequest.Status <> 200 then
+  begin
+    if Assigned(FOnFailure) then
+      FOnFailure;
+  end
+  else
+  begin
+    ParseDatabase(FRequest.responseText);
+    if Assigned(FOnSuccess) then
+      FOnSuccess;
+  end;
+end;
+
+procedure TJSONDatabase.ParseDatabase(data: string);
+begin
+  FJSON:=TJSJSON.parseObject(data);
+end;
+
+constructor TJSONDatabase.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FDatafile:='';
+end;
+
+destructor TJSONDatabase.Destroy;
+begin
+  inherited Destroy;
+end;
 
 { TJSONTable }
 
