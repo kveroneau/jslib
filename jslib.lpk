@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <Package Version="4">
+  <Package Version="5">
     <Name Value="jslib"/>
     <Type Value="RunTimeOnly"/>
     <AutoUpdate Value="Manually"/>
@@ -25,8 +25,8 @@
       <SkipCompiler Value="True"/>
     </CompilerOptions>
     <Description Value="A bunch of Pascal units for use with the pas2js compiler."/>
-    <Version Minor="6"/>
-    <Files Count="16">
+    <Version Minor="7"/>
+    <Files Count="17">
       <Item1>
         <Filename Value="webvt100.pas"/>
         <UnitName Value="webvt100"/>
@@ -91,7 +91,12 @@
         <Filename Value="jsontable.pas"/>
         <UnitName Value="jsontable"/>
       </Item16>
+      <Item17>
+        <Filename Value="puterjs.pas"/>
+        <UnitName Value="puterjs"/>
+      </Item17>
     </Files>
+    <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="1">
       <Item1>
         <PackageName Value="pas2js_rtl"/>
