@@ -33,6 +33,15 @@ type
     message, code: string;
   end;
 
+  TPuterWindowOptions = Class external name 'Object' (TJSObject)
+  public
+    center, disable_parent_window, has_head, is_resizable, show_in_taskbar: boolean;
+    content, title, uri: string;
+    height, width: Integer;
+  end;
+
+  TLaunchCallback = reference to procedure(AItems: TJSArray);
+
   TPuterFS = class(TJSObject)
   public
     function write(AFile, AData: string): TJSPromise external name 'write';
@@ -79,11 +88,27 @@ type
     function getUser: TJSPromise external name 'getUser';
   end;
 
+  { TPuterUI }
+
   TPuterUI = class(TJSObject)
   public
+    env: string; external name 'env';
+    function authenticateWithPuter: TJSPromise external name 'authenticateWithPuter';
+    function alert(AMessage: string): TJSPromise external name 'alert';
+    function alert(AMessage: string; AButtons: TJSArray): TJSPromise external name 'alert';
+    procedure createWindow(options: TPuterWindowOptions) external name 'createWindow';
+    function launchApp: TJSPromise external name 'launchApp';
+    function launchApp(appName: string): TJSPromise external name 'launchApp';
+    function launchApp(appName: string; args: TJSObject): TJSPromise external name 'launchApp';
+    function launchApp(args: TJSObject): TJSPromise external name 'launchApp';
+    procedure onLaunchWithItems(ACallback: TLaunchCallback) external name 'onLaunchWithItems';
     function showOpenFilePicker: TJSPromise external name 'showOpenFilePicker';
     function showSaveFilePicker(data: string): TJSPromise external name 'showSaveFilePicker';
     function showDirectoryPicker: TJSPromise external name 'showDirectoryPicker';
+    function showColorPicker: TJSPromise external name 'showColorPicker';
+    function showColorPicker(DefaultColor: string): TJSPromise external name 'showColorPicker';
+    function showFontPicker: TJSPromise external name 'showFontPicker';
+    function showFontPicker(DefaultFont: string): TJSPromise external name 'showFontPicker';
   end;
 
   TPuterJS = class(TJSObject)
@@ -94,6 +119,7 @@ type
     auth: TPuterAuth;
     ui: TPuterUI;
     function randName: string external name 'randName';
+    procedure exit external name 'exit';
   end;
 
   TPuterErrorEvent = reference to procedure(AError: TPuterErrorMsg);
@@ -102,11 +128,17 @@ type
   TPuterDirectoryEvent = reference to procedure(ADir: TPuterDirectory);
   TDirListEvent = reference to procedure(ADirList: TJSArray);
   TUploadEvent = reference to procedure(AFileList: TJSArray);
+  TPuterAuthEvent = reference to procedure;
+  TPuterAlertEvent = reference to procedure(ALabel: string);
+  TPuterAppLaunchEvent = reference to procedure;
+  TColorEvent = reference to procedure(AColor: string);
+  TFontEvent = reference to procedure(AFont: string);
 
   { TPuter }
 
   TPuter = class(TComponent)
   private
+    FOnLaunchWithItems: TLaunchCallback;
     FOnPuterError: TPuterErrorEvent;
     FOnWriteSuccess: TPuterFileEvent;
     FOnReadSuccess: TReadFileEvent;
@@ -118,6 +150,12 @@ type
     FOnStatSuccess: TPuterFileEvent;
     FOnUploadSuccess: TUploadEvent;
     FOnOpenFileSuccess: TPuterFileEvent;
+    FOnAuthSuccess: TPuterAuthEvent;
+    FOnAlertButton: TPuterAlertEvent;
+    FOnAppLaunch: TPuterAppLaunchEvent;
+    FOnColorSuccess: TColorEvent;
+    FOnFontSuccess: TFontEvent;
+    procedure SetOnLaunchWithItems(AValue: TLaunchCallback);
     function WriteSuccess(AValue: JSValue): JSValue;
     function PuterError(AValue: JSValue): JSValue;
     function ReadSuccess(AValue: JSValue): JSValue;
@@ -131,6 +169,11 @@ type
     procedure ReadFile(f: TPuterFile); async;
     function OpenFile(AValue: JSValue): JSValue;
     function SaveFile(AValue: JSValue): JSValue;
+    function AuthSuccess(AValue: JSValue): JSValue;
+    function AlertSuccess(AValue: JSValue): JSValue;
+    function AppLaunchSuccess(AValue: JSValue): JSValue;
+    function ColorSuccess(AValue: JSValue): JSValue;
+    function FontSuccess(AValue: JSValue): JSValue;
   public
     property OnPuterError: TPuterErrorEvent read FOnPuterError write FOnPuterError;
     property OnWriteSuccess: TPuterFileEvent read FOnWriteSuccess write FOnWriteSuccess;
@@ -143,6 +186,12 @@ type
     property OnStatSuccess: TPuterFileEvent read FOnStatSuccess write FOnStatSuccess;
     property OnUploadSuccess: TUploadEvent read FOnUploadSuccess write FOnUploadSuccess;
     property OnOpenFileSuccess: TPuterFileEvent read FOnOpenFileSuccess write FOnOpenFileSuccess;
+    property OnAuthSuccess: TPuterAuthEvent read FOnAuthSuccess write FOnAuthSuccess;
+    property OnAlertButton: TPuterAlertEvent read FOnAlertButton write FOnAlertButton;
+    property OnAppLaunch: TPuterAppLaunchEvent read FOnAppLaunch write FOnAppLaunch;
+    property OnLaunchWithItems: TLaunchCallback read FOnLaunchWithItems write SetOnLaunchWithItems;
+    property OnColorSuccess: TColorEvent read FOnColorSuccess write FOnColorSuccess;
+    property OnFontSuccess: TFontEvent read FOnFontSuccess write FOnFontSuccess;
     procedure WriteFile(AFile, AData: string);
     procedure ReadFile(AFile: string); async;
     procedure MakeDirectory(ADir: string);
@@ -155,6 +204,17 @@ type
     procedure UploadFile(AFileList: TJSHTMLFileList);
     procedure OpenFileDialog;
     procedure SaveFileDialog(AData: string);
+    procedure AuthenticateWithPuter;
+    procedure Alert(AMessage: string);
+    procedure Alert(AMessage: string; AButtons: TJSArray);
+    procedure CreateWindow(AOptions: TPuterWindowOptions);
+    procedure Exit;
+    procedure LaunchApp;
+    procedure LaunchApp(AName: string);
+    procedure ColorPicker;
+    procedure ColorPicker(DefaultColor: string);
+    procedure FontPicker;
+    procedure FontPicker(DefaultFont: string);
   end;
 
 var
@@ -163,12 +223,21 @@ var
 
 implementation
 
+{ TPuterUI }
+
 { TPuter }
 
 function TPuter.WriteSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnWriteSuccess) then
     FOnWriteSuccess(TPuterFile(AValue));
+end;
+
+procedure TPuter.SetOnLaunchWithItems(AValue: TLaunchCallback);
+begin
+  if FOnLaunchWithItems=AValue then Exit;
+  PuterAPI.ui.onLaunchWithItems(AValue);
+  FOnLaunchWithItems:=AValue;
 end;
 
 function TPuter.PuterError(AValue: JSValue): JSValue;
@@ -246,6 +315,36 @@ function TPuter.SaveFile(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnWriteSuccess) then
     FOnWriteSuccess(TPuterFile(AValue));
+end;
+
+function TPuter.AuthSuccess(AValue: JSValue): JSValue;
+begin
+  if Assigned(FOnAuthSuccess) then
+    FOnAuthSuccess;
+end;
+
+function TPuter.AlertSuccess(AValue: JSValue): JSValue;
+begin
+  if Assigned(FOnAlertButton) then
+    FOnAlertButton(String(AValue));
+end;
+
+function TPuter.AppLaunchSuccess(AValue: JSValue): JSValue;
+begin
+  if Assigned(FOnAppLaunch) then
+    FOnAppLaunch;
+end;
+
+function TPuter.ColorSuccess(AValue: JSValue): JSValue;
+begin
+  if Assigned(FOnColorSuccess) then
+    FOnColorSuccess(String(AValue));
+end;
+
+function TPuter.FontSuccess(AValue: JSValue): JSValue;
+begin
+  if Assigned(FOnFontSuccess) then
+    FOnFontSuccess(String(AValue));
 end;
 
 procedure TPuter.WriteFile(AFile, AData: string);
@@ -341,6 +440,88 @@ var
 begin
   p:=PuterAPI.ui.showSaveFilePicker(AData);
   p._then(@SaveFile);
+end;
+
+procedure TPuter.AuthenticateWithPuter;
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.authenticateWithPuter;
+  p._then(@AuthSuccess, @PuterError);
+end;
+
+procedure TPuter.Alert(AMessage: string);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.alert(AMessage);
+  p._then(@AlertSuccess, @PuterError);
+end;
+
+procedure TPuter.Alert(AMessage: string; AButtons: TJSArray);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.alert(AMessage, AButtons);
+  p._then(@AlertSuccess, @PuterError);
+end;
+
+procedure TPuter.CreateWindow(AOptions: TPuterWindowOptions);
+begin
+  PuterAPI.ui.createWindow(AOptions);
+end;
+
+procedure TPuter.Exit;
+begin
+  PuterAPI.exit;
+end;
+
+procedure TPuter.LaunchApp;
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.launchApp;
+  p._then(@AppLaunchSuccess, @PuterError);
+end;
+
+procedure TPuter.LaunchApp(AName: string);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.launchApp(AName);
+  p._then(@AppLaunchSuccess, @PuterError);
+end;
+
+procedure TPuter.ColorPicker;
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.showColorPicker;
+  p._then(@ColorSuccess, @PuterError);
+end;
+
+procedure TPuter.ColorPicker(DefaultColor: string);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.showColorPicker(DefaultColor);
+  p._then(@ColorSuccess, @PuterError);
+end;
+
+procedure TPuter.FontPicker;
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.showFontPicker;
+  p._then(@FontSuccess, @PuterError);
+end;
+
+procedure TPuter.FontPicker(DefaultFont: string);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.showFontPicker(DefaultFont);
+  p._then(@FontSuccess, @PuterError);
 end;
 
 initialization
