@@ -18,6 +18,8 @@ type
     function read: TJSPromise external name 'read';
   end;
 
+  TPuterDirList = array of TPuterFSItem;
+
   TPuterUserInfo = class(TJSObject)
   public
     uuid, username: string;
@@ -125,8 +127,8 @@ type
   TPuterFileEvent = reference to procedure(AFile: TPuterFSItem);
   TReadFileEvent = reference to procedure(AContent: string);
   TPuterDirectoryEvent = reference to procedure(ADir: TPuterFSItem);
-  TDirListEvent = reference to procedure(ADirList: TJSArray);
-  TUploadEvent = reference to procedure(AFileList: TJSArray);
+  TDirListEvent = reference to procedure(ADirList: TPuterDirList);
+  TUploadEvent = reference to procedure(AFileList: TPuterFSItem);
   TPuterAuthEvent = reference to procedure;
   TPuterAlertEvent = reference to procedure(ALabel: string);
   TPuterAppLaunchEvent = reference to procedure;
@@ -272,7 +274,7 @@ end;
 function TPuter.ReadDirSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnDirListSuccess) then
-    FOnDirListSuccess(TJSArray(AValue));
+    FOnDirListSuccess(TPuterDirList(AValue));
 end;
 
 function TPuter.RenameSuccess(AValue: JSValue): JSValue;
@@ -302,7 +304,7 @@ end;
 function TPuter.UploadSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnUploadSuccess) then
-    FOnUploadSuccess(TJSArray(AValue));
+    FOnUploadSuccess(TPuterFSItem(AValue));
 end;
 
 procedure TPuter.ReadFile(f: TPuterFSItem);
