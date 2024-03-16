@@ -9,17 +9,13 @@ uses
   Classes, SysUtils, JS, Web;
 
 type
-  TPuterFile = class(TJSObject)
+  TPuterFSItem = Class external name 'FSItem' (TJSObject)
   public
     name, path, content: string;
     size: Integer;
     created: TJSDate;
+    isDirectory: Boolean;
     function read: TJSPromise external name 'read';
-  end;
-
-  TPuterDirectory = class(TJSObject)
-  public
-    path: string;
   end;
 
   TPuterUserInfo = class(TJSObject)
@@ -96,6 +92,8 @@ type
     function authenticateWithPuter: TJSPromise external name 'authenticateWithPuter';
     function alert(AMessage: string): TJSPromise external name 'alert';
     function alert(AMessage: string; AButtons: TJSArray): TJSPromise external name 'alert';
+    function prompt(AMessage: string): TJSPromise external name 'prompt';
+    function prompt(AMessage, APlaceHolder: string): TJSPromise external name 'prompt';
     procedure createWindow(options: TPuterWindowOptions) external name 'createWindow';
     function launchApp: TJSPromise external name 'launchApp';
     function launchApp(appName: string): TJSPromise external name 'launchApp';
@@ -109,6 +107,7 @@ type
     function showColorPicker(DefaultColor: string): TJSPromise external name 'showColorPicker';
     function showFontPicker: TJSPromise external name 'showFontPicker';
     function showFontPicker(DefaultFont: string): TJSPromise external name 'showFontPicker';
+    function setWindowTitle(ATitle: string): TJSPromise external name 'setWindowTitle';
   end;
 
   TPuterJS = class(TJSObject)
@@ -123,9 +122,9 @@ type
   end;
 
   TPuterErrorEvent = reference to procedure(AError: TPuterErrorMsg);
-  TPuterFileEvent = reference to procedure(AFile: TPuterFile);
+  TPuterFileEvent = reference to procedure(AFile: TPuterFSItem);
   TReadFileEvent = reference to procedure(AContent: string);
-  TPuterDirectoryEvent = reference to procedure(ADir: TPuterDirectory);
+  TPuterDirectoryEvent = reference to procedure(ADir: TPuterFSItem);
   TDirListEvent = reference to procedure(ADirList: TJSArray);
   TUploadEvent = reference to procedure(AFileList: TJSArray);
   TPuterAuthEvent = reference to procedure;
@@ -155,7 +154,9 @@ type
     FOnAppLaunch: TPuterAppLaunchEvent;
     FOnColorSuccess: TColorEvent;
     FOnFontSuccess: TFontEvent;
+    FWindowTitle: string;
     procedure SetOnLaunchWithItems(AValue: TLaunchCallback);
+    procedure SetWindowTitle(AValue: string);
     function WriteSuccess(AValue: JSValue): JSValue;
     function PuterError(AValue: JSValue): JSValue;
     function ReadSuccess(AValue: JSValue): JSValue;
@@ -166,7 +167,7 @@ type
     function MoveSuccess(AValue: JSValue): JSValue;
     function StatSuccess(AValue: JSValue): JSValue;
     function UploadSuccess(AValue: JSValue): JSValue;
-    procedure ReadFile(f: TPuterFile); async;
+    procedure ReadFile(f: TPuterFSItem); async;
     function OpenFile(AValue: JSValue): JSValue;
     function SaveFile(AValue: JSValue): JSValue;
     function AuthSuccess(AValue: JSValue): JSValue;
@@ -192,6 +193,7 @@ type
     property OnLaunchWithItems: TLaunchCallback read FOnLaunchWithItems write SetOnLaunchWithItems;
     property OnColorSuccess: TColorEvent read FOnColorSuccess write FOnColorSuccess;
     property OnFontSuccess: TFontEvent read FOnFontSuccess write FOnFontSuccess;
+    property WindowTitle: string read FWindowTitle write SetWindowTitle;
     procedure WriteFile(AFile, AData: string);
     procedure ReadFile(AFile: string); async;
     procedure MakeDirectory(ADir: string);
@@ -207,6 +209,8 @@ type
     procedure AuthenticateWithPuter;
     procedure Alert(AMessage: string);
     procedure Alert(AMessage: string; AButtons: TJSArray);
+    procedure Prompt(AMessage: string);
+    procedure Prompt(AMessage, APlaceHolder: string);
     procedure CreateWindow(AOptions: TPuterWindowOptions);
     procedure Exit;
     procedure LaunchApp;
@@ -230,7 +234,7 @@ implementation
 function TPuter.WriteSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnWriteSuccess) then
-    FOnWriteSuccess(TPuterFile(AValue));
+    FOnWriteSuccess(TPuterFSItem(AValue));
 end;
 
 procedure TPuter.SetOnLaunchWithItems(AValue: TLaunchCallback);
@@ -238,6 +242,13 @@ begin
   if FOnLaunchWithItems=AValue then Exit;
   PuterAPI.ui.onLaunchWithItems(AValue);
   FOnLaunchWithItems:=AValue;
+end;
+
+procedure TPuter.SetWindowTitle(AValue: string);
+begin
+  if FWindowTitle=AValue then Exit;
+  PuterAPI.ui.setWindowTitle(AValue);
+  FWindowTitle:=AValue;
 end;
 
 function TPuter.PuterError(AValue: JSValue): JSValue;
@@ -255,7 +266,7 @@ end;
 function TPuter.MkdirSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnDirSuccess) then
-    FOnDirSuccess(TPuterDirectory(AValue));
+    FOnDirSuccess(TPuterFSItem(AValue));
 end;
 
 function TPuter.ReadDirSuccess(AValue: JSValue): JSValue;
@@ -267,25 +278,25 @@ end;
 function TPuter.RenameSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnRenameSuccess) then
-    FOnRenameSuccess(TPuterFile(AValue));
+    FOnRenameSuccess(TPuterFSItem(AValue));
 end;
 
 function TPuter.CopySuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnCopySuccess) then
-    FOnCopySuccess(TPuterFile(AValue));
+    FOnCopySuccess(TPuterFSItem(AValue));
 end;
 
 function TPuter.MoveSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnMoveSuccess) then
-    FOnMoveSuccess(TPuterFile(AValue));
+    FOnMoveSuccess(TPuterFSItem(AValue));
 end;
 
 function TPuter.StatSuccess(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnStatSuccess) then
-    FOnStatSuccess(TPuterFile(AValue));
+    FOnStatSuccess(TPuterFSItem(AValue));
 end;
 
 function TPuter.UploadSuccess(AValue: JSValue): JSValue;
@@ -294,7 +305,7 @@ begin
     FOnUploadSuccess(TJSArray(AValue));
 end;
 
-procedure TPuter.ReadFile(f: TPuterFile);
+procedure TPuter.ReadFile(f: TPuterFSItem);
 var
   b: TJSBlob;
 begin
@@ -308,13 +319,13 @@ end;
 
 function TPuter.OpenFile(AValue: JSValue): JSValue;
 begin
-  ReadFile(TPuterFile(AValue));
+  ReadFile(TPuterFSItem(AValue));
 end;
 
 function TPuter.SaveFile(AValue: JSValue): JSValue;
 begin
   if Assigned(FOnWriteSuccess) then
-    FOnWriteSuccess(TPuterFile(AValue));
+    FOnWriteSuccess(TPuterFSItem(AValue));
 end;
 
 function TPuter.AuthSuccess(AValue: JSValue): JSValue;
@@ -463,6 +474,22 @@ var
   p: TJSPromise;
 begin
   p:=PuterAPI.ui.alert(AMessage, AButtons);
+  p._then(@AlertSuccess, @PuterError);
+end;
+
+procedure TPuter.Prompt(AMessage: string);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.prompt(AMessage);
+  p._then(@AlertSuccess, @PuterError);
+end;
+
+procedure TPuter.Prompt(AMessage, APlaceHolder: string);
+var
+  p: TJSPromise;
+begin
+  p:=PuterAPI.ui.prompt(AMessage, APlaceHolder);
   p._then(@AlertSuccess, @PuterError);
 end;
 
