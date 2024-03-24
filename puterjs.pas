@@ -119,6 +119,7 @@ type
     hosting: TPuterHosting;
     auth: TPuterAuth;
     ui: TPuterUI;
+    args: TJSObject;
     function randName: string external name 'randName';
     procedure exit external name 'exit';
   end;

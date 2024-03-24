@@ -36,7 +36,6 @@ type
     procedure SetActive(AValue: Boolean);
     procedure SetBooleans(AField: string; AValue: Boolean);
     procedure SetDatafile(AValue: string);
-    procedure ParseTable(data: string);
     procedure ParseJSON;
     procedure OpenTable;
     procedure CloseTable;
@@ -60,6 +59,8 @@ type
     property Dates[AField: string]: TDateTime read GetDates write SetDates;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    function GetJSON: string;
+    procedure ParseTable(data: string);
   end;
 
   { TJSONDatabase }
@@ -172,7 +173,6 @@ begin
     OpenTable
   else
     CloseTable;
-  FActive:=AValue;
 end;
 
 procedure TJSONTable.SetBooleans(AField: string; AValue: Boolean);
@@ -219,10 +219,13 @@ procedure TJSONTable.ParseTable(data: string);
 var
   json: TJSObject;
 begin
+  if FActive then
+    raise EJSONTable.Create('Cannot parse table with active dataset.');
   json:=TJSJSON.parseObject(data);
   FDataSet.MetaData:=TJSObject(json.Properties['metaData']);
   FDataSet.Rows:=TJSArray(json.Properties['Data']);
   FDataSet.Open;
+  FActive:=True;
 end;
 
 procedure TJSONTable.ParseJSON;
@@ -313,6 +316,16 @@ destructor TJSONTable.Destroy;
 begin
   FDataSet.Free;
   inherited Destroy;
+end;
+
+function TJSONTable.GetJSON: string;
+var
+  j: TJSObject;
+begin
+  j:=TJSObject.new;
+  j.Properties['metaData']:=FDataSet.MetaData;
+  j.Properties['Data']:=FDataSet.Rows;
+  Result:=TJSJSON.stringify(j);
 end;
 
 end.
