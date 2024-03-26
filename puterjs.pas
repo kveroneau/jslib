@@ -38,6 +38,14 @@ type
     height, width: Integer;
   end;
 
+  TPuterWebsite = class(TJSObject)
+  public
+    id, subdomain: string;
+    created_on: TJSDate;
+  end;
+
+  TPuterHostList = Array of TPuterWebsite;
+
   TLaunchCallback = reference to procedure(AItems: TJSArray);
 
   TPuterFS = class(TJSObject)
@@ -110,6 +118,9 @@ type
     function showFontPicker: TJSPromise external name 'showFontPicker';
     function showFontPicker(DefaultFont: string): TJSPromise external name 'showFontPicker';
     function setWindowTitle(ATitle: string): TJSPromise external name 'setWindowTitle';
+    procedure setWindowHeight(AHeight: integer) external name 'setWindowHeight';
+    procedure setWindowWidth(AWidth: integer) external name 'setWindowWidth';
+    procedure setWindowSize(AWidth, AHeight: integer) external name 'setWindowSize';
   end;
 
   TPuterJS = class(TJSObject)
@@ -157,9 +168,13 @@ type
     FOnAppLaunch: TPuterAppLaunchEvent;
     FOnColorSuccess: TColorEvent;
     FOnFontSuccess: TFontEvent;
+    FWindowHeight: integer;
     FWindowTitle: string;
+    FWindowWidth: integer;
     procedure SetOnLaunchWithItems(AValue: TLaunchCallback);
+    procedure SetWindowHeight(AValue: integer);
     procedure SetWindowTitle(AValue: string);
+    procedure SetWindowWidth(AValue: integer);
     function WriteSuccess(AValue: JSValue): JSValue;
     function PuterError(AValue: JSValue): JSValue;
     function ReadSuccess(AValue: JSValue): JSValue;
@@ -197,6 +212,8 @@ type
     property OnColorSuccess: TColorEvent read FOnColorSuccess write FOnColorSuccess;
     property OnFontSuccess: TFontEvent read FOnFontSuccess write FOnFontSuccess;
     property WindowTitle: string read FWindowTitle write SetWindowTitle;
+    property WindowHeight: integer read FWindowHeight write SetWindowHeight;
+    property WindowWidth: integer read FWindowWidth write SetWindowWidth;
     procedure WriteFile(AFile, AData: string);
     procedure ReadFile(AFile: string); async;
     procedure MakeDirectory(ADir: string);
@@ -247,11 +264,25 @@ begin
   FOnLaunchWithItems:=AValue;
 end;
 
+procedure TPuter.SetWindowHeight(AValue: integer);
+begin
+  if FWindowHeight=AValue then Exit;
+  PuterAPI.ui.setWindowHeight(AValue);
+  FWindowHeight:=AValue;
+end;
+
 procedure TPuter.SetWindowTitle(AValue: string);
 begin
   if FWindowTitle=AValue then Exit;
   PuterAPI.ui.setWindowTitle(AValue);
   FWindowTitle:=AValue;
+end;
+
+procedure TPuter.SetWindowWidth(AValue: integer);
+begin
+  if FWindowWidth=AValue then Exit;
+  PuterAPI.ui.setWindowWidth(AValue);
+  FWindowWidth:=AValue;
 end;
 
 function TPuter.PuterError(AValue: JSValue): JSValue;

@@ -13,10 +13,13 @@ type
 
   TBulmaWidget = class(TComponent)
   private
+    FLines: TStringList;
     FBody: TJSHTMLElement;
   public
     constructor Create(AOwner: TComponent; const target: string);
+    destructor Destroy; override;
     procedure setContent(const content: string);
+    procedure Write(const content: string);
   end;
 
   { TBulmaModal }
@@ -682,12 +685,26 @@ end;
 procedure TBulmaWidget.setContent(const content: string);
 begin
   FBody.innerHTML:=content;
+  FLines.Text:=content;
+end;
+
+procedure TBulmaWidget.Write(const content: string);
+begin
+  FLines.Add(content);
+  FBody.innerHTML:=FLines.Text;
 end;
 
 constructor TBulmaWidget.Create(AOwner: TComponent; const target: string);
 begin
   inherited Create(AOwner);
+  FLines:=TStringList.Create;
   FBody:=TJSHTMLElement(document.getElementById(target));
+end;
+
+destructor TBulmaWidget.Destroy;
+begin
+  FLines.Free;
+  inherited Destroy;
 end;
 
 end.
