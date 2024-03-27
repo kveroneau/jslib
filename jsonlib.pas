@@ -19,12 +19,17 @@ type
     function GetInt(Name: String): NativeInt;
     function GetObject(Name: String): TJSONData;
     function GetString(Name: String): String;
+    procedure SetArray(Name: String; AValue: TJSArray);
+    procedure SetBoolean(Name: String; AValue: Boolean);
+    procedure SetInt(Name: String; AValue: NativeInt);
+    procedure SetObject(Name: String; AValue: TJSONData);
+    procedure SetString(Name: String; AValue: String);
   public
-    property Strings[Name: String]: String read GetString;
-    property Booleans[Name: String]: Boolean read GetBoolean;
-    property Integers[Name: String]: NativeInt read GetInt;
-    property Objects[Name: String]: TJSONData read GetObject;
-    property Arrays[Name: String]: TJSArray read GetArray;
+    property Strings[Name: String]: String read GetString write SetString;
+    property Booleans[Name: String]: Boolean read GetBoolean write SetBoolean;
+    property Integers[Name: String]: NativeInt read GetInt write SetInt;
+    property Objects[Name: String]: TJSONData read GetObject write SetObject;
+    property Arrays[Name: String]: TJSArray read GetArray write SetArray;
     constructor Create(AOwner: TComponent; data: TJSObject);
     function contains(aName: String): boolean;
   end;
@@ -36,6 +41,31 @@ implementation
 function TJSONData.GetString(Name: String): String;
 begin
   Result:=String(FData.Properties[Name]);
+end;
+
+procedure TJSONData.SetArray(Name: String; AValue: TJSArray);
+begin
+  FData.Properties[Name]:=AValue;
+end;
+
+procedure TJSONData.SetBoolean(Name: String; AValue: Boolean);
+begin
+  FData.Properties[Name]:=AValue;
+end;
+
+procedure TJSONData.SetInt(Name: String; AValue: NativeInt);
+begin
+  FData.Properties[Name]:=AValue;
+end;
+
+procedure TJSONData.SetObject(Name: String; AValue: TJSONData);
+begin
+  FData.Properties[Name]:=AValue;
+end;
+
+procedure TJSONData.SetString(Name: String; AValue: String);
+begin
+  FData.Properties[Name]:=AValue;
 end;
 
 function TJSONData.GetBoolean(Name: String): Boolean;

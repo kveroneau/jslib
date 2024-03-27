@@ -44,10 +44,12 @@ type
   TJSONRequest = class(TWebRequest)
   private
     FJSONCallback: TJSONCallback;
+    FOnJSONError: TNotifyEvent;
     procedure ParseJSON;
     procedure SetJSONCallback(AValue: TJSONCallback);
   public
     property OnJSON: TJSONCallback read FJSONCallback write SetJSONCallback;
+    property OnJSONError: TNotifyEvent read FOnJSONError write FOnJSONError;
   end;
 
   TVMData = Class external name 'Object' (TJSObject)
@@ -98,8 +100,13 @@ var
 begin
   if not Complete then
     Exit;
-  data:=TJSJSON.parseObject(responseText);
-  FJSONCallback(TJSONData.Create(Self, data));
+  if FRequest.Status = 200 then
+  begin
+    data:=TJSJSON.parseObject(responseText);
+    FJSONCallback(TJSONData.Create(Self, data));
+  end
+  else if Assigned(FOnJSONError) then
+    FOnJSONError(Self);
 end;
 
 procedure TJSONRequest.SetJSONCallback(AValue: TJSONCallback);

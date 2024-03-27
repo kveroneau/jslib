@@ -14,6 +14,7 @@ type
   TDOSFileSystem = class(TJSObject)
   Public
     function extract(ZipFile, MountPoint: string): TJSPromise; external name 'extract';
+
   end;
 
   TDOSBoxReady = reference to procedure(FileSystem: TDOSFileSystem; Main: TDOSMain);
@@ -32,6 +33,7 @@ type
     FZipFile, FEXE, FMP: string;
     FFS: TDOSFileSystem;
     FMain: TDOSMain;
+    FCI: JSValue;
     procedure ExtractApp(AFS: TDOSFileSystem; AMain: TDOSMain);
     function StartApp(AValue: JSValue): JSValue;
     function AppRunning(AValue: JSValue): JSValue;
@@ -69,13 +71,13 @@ end;
 
 function TDOSBox.AppRunning(AValue: JSValue): JSValue;
 begin
-  {WriteLn('Looks like it is all up and running now!');}
+  FCI:=AValue;
 end;
 
 constructor TDOSBox.Create(AOwner: TComponent; App, Exe, Path: string);
 begin
   inherited Create(AOwner);
-  FZipFile:='/'+App+'.zip?dl=y';
+  FZipFile:=App+'.zip';
   FEXE:=Exe;
   FMP:=Path;
   FApp:=TJSDOSBox.new(TJSHTMLCanvasElement(document.getElementById('dosapp')));
