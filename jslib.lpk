@@ -25,8 +25,8 @@
       <SkipCompiler Value="True"/>
     </CompilerOptions>
     <Description Value="A bunch of Pascal units for use with the pas2js compiler."/>
-    <Version Minor="7"/>
-    <Files Count="17">
+    <Version Minor="8"/>
+    <Files Count="20">
       <Item1>
         <Filename Value="webvt100.pas"/>
         <UnitName Value="webvt100"/>
@@ -95,6 +95,18 @@
         <Filename Value="puterjs.pas"/>
         <UnitName Value="puterjs"/>
       </Item17>
+      <Item18>
+        <Filename Value="jsdrag.pas"/>
+        <UnitName Value="jsdrag"/>
+      </Item18>
+      <Item19>
+        <Filename Value="webfs.pas"/>
+        <UnitName Value="webfs"/>
+      </Item19>
+      <Item20>
+        <Filename Value="cardiac.pas"/>
+        <UnitName Value="cardiac"/>
+      </Item20>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="1">

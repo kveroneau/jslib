@@ -167,15 +167,24 @@ type
   private
     FControlType: TBulmaControlType;
     FElement: TJSHTMLInputElement;
+    FOnChange: TJSEventHandler;
+    FOnKeyPress: TJSKeyEventhandler;
+    FOnKeyUp: TJSKeyEventhandler;
     function GetJSValue: TJSString;
     function GetValue: string;
     procedure SetControlType(AValue: TBulmaControlType);
+    procedure SetOnChange(AValue: TJSEventHandler);
+    procedure SetOnKeyPress(AValue: TJSKeyEventhandler);
+    procedure SetOnKeyUp(AValue: TJSKeyEventhandler);
     procedure SetValue(AValue: string);
     procedure Setup;
   public
     property ControlType: TBulmaControlType read FControlType write SetControlType;
     property Value: string read GetValue write SetValue;
     property JSValue: TJSString read GetJSValue;
+    property OnChange: TJSEventHandler read FOnChange write SetOnChange;
+    property OnKeyPress: TJSKeyEventhandler read FOnKeyPress write SetOnKeyPress;
+    property OnKeyUp: TJSKeyEventhandler read FOnKeyUp write SetOnKeyUp;
     function renderControl: string; override;
   end;
 
@@ -258,6 +267,30 @@ begin
     FHasIcons:=True
   else
     FHasIcons:=False;
+end;
+
+procedure TBulmaInput.SetOnChange(AValue: TJSEventHandler);
+begin
+  if FOnChange=AValue then Exit;
+  Setup;
+  FElement.onchange:=AValue;
+  FOnChange:=AValue;
+end;
+
+procedure TBulmaInput.SetOnKeyPress(AValue: TJSKeyEventhandler);
+begin
+  if FOnKeyPress=AValue then Exit;
+  Setup;
+  FElement.onkeypress:=AValue;
+  FOnKeyPress:=AValue;
+end;
+
+procedure TBulmaInput.SetOnKeyUp(AValue: TJSKeyEventhandler);
+begin
+  if FOnKeyUp=AValue then Exit;
+  Setup;
+  FElement.onkeyup:=AValue;
+  FOnKeyUp:=AValue;
 end;
 
 procedure TBulmaInput.SetValue(AValue: string);

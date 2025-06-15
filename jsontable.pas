@@ -250,7 +250,11 @@ var
   info: TResourceInfo;
 begin
   if GetResourceInfo(rsJS, FDatafile, info) then
-    ParseTable(window.atob(info.data))
+  begin
+    ParseTable(window.atob(info.data));
+    if Assigned(FOnSuccess) then
+      FOnSuccess;
+  end
   else
   begin
     FRequest:=TWebRequest.Create(Self, 'get', FDatafile+'.json');

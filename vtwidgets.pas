@@ -95,12 +95,12 @@ type
     FLabel: String;
     FPosition: TPoint;
     FSize: integer;
-    FOnClick: TProc;
+    FOnClick: TProcString;
   Public
     constructor Create(AOwner: TComponent; const s: string; x,y: integer);
     procedure Render; override;
     procedure HandleMouse(const Button, Row, Col: integer); override;
-    property OnClick: TProc read FOnClick write FOnClick;
+    property OnClick: TProcString read FOnClick write FOnClick;
   end;
 
   { TVTIcon }
@@ -149,6 +149,8 @@ type
     procedure Render; override;
     procedure AddLabel(const s: string);
     procedure AddLine(const s: string);
+    function AddButton(const s: string; x,y: integer): TVTButton;
+    function AddIcon(const s,ico: string; x,y: integer): TVTIcon;
     property Position: TRect read FPosition;
     property BorderForeground: integer read FBForeground write FBForeground;
     property BorderBackground: integer read FBBackground write FBBackground;
@@ -177,6 +179,8 @@ type
     FForeground: integer;
     FBackground: integer;
     FWidgets: TWidgetContainer;
+    FOnInput: TProcString;
+    FOnCtrl: TProcString;
     procedure HandleInput(const data: string);
     procedure HandleCtrl(const data: string);
     procedure HandleMouse(Button, col, row: Integer);
@@ -195,6 +199,8 @@ type
     procedure Clear;
     procedure Render;
     property OnRefresh: TProc read FOnRefresh write FOnRefresh;
+    property OnInput: TProcString read FOnInput write FOnInput;
+    property OnCtrl: TProcString read FOnCtrl write FOnCtrl;
     property Inverse: boolean write SetInverse;
     property Widgets: TWidgetContainer read FWidgets;
     property WebTerminal: TWebTerminal read FTerm;
@@ -273,7 +279,7 @@ begin
     Exit;
   if (Button = 0) and (Row = FPosition.x) then
     if (Col >= FPosition.y) and (Col <= FSize) then
-      FOnClick();
+      FOnClick(FLabel);
 end;
 
 { TVTDesktop }
@@ -476,6 +482,16 @@ begin
   TVTLine.Create(Self, s);
 end;
 
+function TVTWindow.AddButton(const s: string; x, y: integer): TVTButton;
+begin
+  Result:=TVTButton.Create(Self, s, Position.Top+y, Position.Left+x);
+end;
+
+function TVTWindow.AddIcon(const s, ico: string; x, y: integer): TVTIcon;
+begin
+  Result:=TVTIcon.Create(Self, s, ico, Position.Top+y, Position.Left+x);
+end;
+
 { TVTDataLabel }
 
 procedure TVTDataLabel.Draw;
@@ -606,13 +622,16 @@ end;
 
 procedure TVTScreen.HandleInput(const data: string);
 begin
-
+  if Assigned(FOnInput) then
+    FOnInput(data);
 end;
 
 procedure TVTScreen.HandleCtrl(const data: string);
 begin
   if (data = 'F5') and Assigned(FOnRefresh) then
-    FOnRefresh;
+    FOnRefresh
+  else if Assigned(FOnCtrl) then
+    FOnCtrl(data);
 end;
 
 procedure TVTScreen.HandleMouse(Button, col, row: Integer);
@@ -704,6 +723,8 @@ procedure TVTScreen.CountDown(secs: integer; OnCountDown: TProc);
 begin
   FCountDown:=secs;
   FOnCountDown:=OnCountDown;
+  if not FTimer.Enabled then
+    FTimer.Enabled:=True;
 end;
 
 procedure TVTScreen.Center(const row: integer; const msg: string);

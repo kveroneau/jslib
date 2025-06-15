@@ -20,7 +20,7 @@ type
     constructor Create(AOwner: TComponent; const FileName, target: string; onLoadError: TStringNotifyEventRef);
   end;
 
-function markdown(const s: string): string; external name 'window.marked';
+function markdown(const s: string): string; external name 'window.marked.parse';
 
 implementation
 
