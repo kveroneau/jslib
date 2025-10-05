@@ -109,11 +109,6 @@
       </Item20>
     </Files>
     <CompatibilityMode Value="True"/>
-    <RequiredPkgs Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPkgs>
     <UsageOptions>
       <CustomOptions Value="-dPas2js"/>
       <UnitPath Value="$(PkgOutDir)"/>
