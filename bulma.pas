@@ -9,6 +9,8 @@ uses
 
 type
 
+  TBulmaAction = reference to procedure; safecall;
+
   { TBulmaWidget }
 
   TBulmaWidget = class(TComponent)
@@ -93,14 +95,14 @@ type
   private
     FTitle: string;
     FItemID: string;
-    FOnClick: THTMLClickEventHandler;
+    FOnClick: TBulmaAction;
     FActive: Boolean;
     FTab: TJSHTMLElement;
     procedure SetActive(AValue: Boolean);
     function TabClicked(aEvent: TJSMouseEvent): Boolean;
   public
     property Active: Boolean read FActive write SetActive;
-    constructor Create(AOwner: TComponent; ATitle, ItemID: string; onClick: THTMLClickEventHandler);
+    constructor Create(AOwner: TComponent; ATitle, ItemID: string; onClick: TBulmaAction);
     function renderHTML: string;
     procedure Bind;
   end;
@@ -120,7 +122,7 @@ type
   public
     property ActiveTab: TBulmaTab read FActiveTab write SetActiveTab;
     property TabType: TBulmaTabType read FTabType write FTabType;
-    function AddTab(ATitle, ItemID: string; onClick: THTMLClickEventHandler): TBulmaTab;
+    function AddTab(ATitle, ItemID: string; onClick: TBulmaAction): TBulmaTab;
     procedure renderHTML;
   end;
 
@@ -443,7 +445,7 @@ begin
     Exit;
   tabs.ActiveTab:=Self;
   if Assigned(FOnClick) then
-    Result:=FOnClick(aEvent)
+    FOnClick
   else
     Result:=False;
 end;
@@ -459,7 +461,7 @@ begin
 end;
 
 constructor TBulmaTab.Create(AOwner: TComponent; ATitle, ItemID: string;
-  onClick: THTMLClickEventHandler);
+  onClick: TBulmaAction);
 begin
   inherited Create(AOwner);
   FTitle:=ATitle;
@@ -506,8 +508,8 @@ begin
   FActiveTab.Active:=True;
 end;
 
-function TBulmaTabs.AddTab(ATitle, ItemID: string;
-  onClick: THTMLClickEventHandler): TBulmaTab;
+function TBulmaTabs.AddTab(ATitle, ItemID: string; onClick: TBulmaAction
+  ): TBulmaTab;
 var
   i: Integer;
 begin
