@@ -211,11 +211,12 @@ type
   TBulmaButton = class(TComponent)
   private
     FTitle, FFieldID: string;
-    FOnClick: THTMLClickEventHandler;
+    FOnClick: TBulmaAction;
     FStyle: string;
+    function ButtonClicked(aEvent: TJSMouseEvent): boolean;
   public
     property ButtonStyle: string read FStyle write FStyle;
-    constructor Create(AOwner: TComponent; ATitle, AFieldID: string; onClick: THTMLClickEventHandler);
+    constructor Create(AOwner: TComponent; ATitle, AFieldID: string; onClick: TBulmaAction);
     function renderHTML: string;
     procedure Bind;
   end;
@@ -224,8 +225,14 @@ implementation
 
 { TBulmaButton }
 
+function TBulmaButton.ButtonClicked(aEvent: TJSMouseEvent): boolean;
+begin
+  if Assigned(FOnClick) then
+    FOnClick;
+end;
+
 constructor TBulmaButton.Create(AOwner: TComponent; ATitle, AFieldID: string;
-  onClick: THTMLClickEventHandler);
+  onClick: TBulmaAction);
 begin
   inherited Create(AOwner);
   FTitle:=ATitle;
@@ -244,7 +251,7 @@ var
   e: TJSHTMLElement;
 begin
   e:=TJSHTMLElement(document.getElementById(FFieldID));
-  e.onclick:=FOnClick;
+  e.onclick:=@ButtonClicked;
 end;
 
 { TBulmaInput }
