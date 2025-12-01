@@ -26,7 +26,7 @@
     </CompilerOptions>
     <Description Value="A bunch of Pascal units for use with the pas2js compiler."/>
     <Version Minor="9"/>
-    <Files Count="20">
+    <Files Count="23">
       <Item1>
         <Filename Value="webvt100.pas"/>
         <UnitName Value="webvt100"/>
@@ -107,8 +107,25 @@
         <Filename Value="cardiac.pas"/>
         <UnitName Value="cardiac"/>
       </Item20>
+      <Item21>
+        <Filename Value="webqvfs.pas"/>
+        <UnitName Value="webqvfs"/>
+      </Item21>
+      <Item22>
+        <Filename Value="tokenizer.pas"/>
+        <UnitName Value="tokenizer"/>
+      </Item22>
+      <Item23>
+        <Filename Value="acitree.pas"/>
+        <UnitName Value="acitree"/>
+      </Item23>
     </Files>
     <CompatibilityMode Value="True"/>
+    <RequiredPkgs Count="1">
+      <Item1>
+        <PackageName Value="pas2js_rtl"/>
+      </Item1>
+    </RequiredPkgs>
     <UsageOptions>
       <CustomOptions Value="-dPas2js"/>
       <UnitPath Value="$(PkgOutDir)"/>

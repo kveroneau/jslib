@@ -56,7 +56,6 @@ type
     procedure HandleInput(const data: string);
     procedure HandleOOB(const data: string);
     procedure Esc(const data: string);
-    procedure Csi(const data: string);
     procedure GetTermSize;
     procedure SetMouse(value: Boolean);
     procedure DrawPrompt;
@@ -72,6 +71,7 @@ type
     destructor Destroy; override;
     procedure Write(const data: string);
     procedure WriteLn(const data: string);
+    procedure Csi(const data: string);
     procedure Clear;
     procedure MoveTo(row, col: Integer);
     procedure EnableInput;

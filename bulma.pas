@@ -16,6 +16,7 @@ type
   TBulmaWidget = class(TComponent)
   private
     FLines: TStringList;
+  protected
     FBody: TJSHTMLElement;
   public
     constructor Create(AOwner: TComponent; const target: string);
@@ -122,7 +123,8 @@ type
   public
     property ActiveTab: TBulmaTab read FActiveTab write SetActiveTab;
     property TabType: TBulmaTabType read FTabType write FTabType;
-    function AddTab(ATitle, ItemID: string; onClick: TBulmaAction): TBulmaTab;
+    function AddTab(ATitle, ItemID: string; onClick: THTMLClickEventHandler): TBulmaTab;
+    function InsertTab(idx: Integer; ATitle, ItemID: string; onClick: THTMLClickEventHandler): TBulmaTab;
     procedure renderHTML;
   end;
 
@@ -531,6 +533,19 @@ begin
   end;
 end;
 
+function TBulmaTabs.InsertTab(idx: Integer; ATitle, ItemID: string;
+  onClick: THTMLClickEventHandler): TBulmaTab;
+var
+  i: Integer;
+begin
+  i:=Length(FTabs);
+  SetLength(FTabs, i+1);
+  for i:=Length(FTabs)-2 downto idx do
+    FTabs[i+1]:=FTabs[i];
+  Result:=TBulmaTab.Create(Self, ATitle, ItemID, onClick);
+  FTabs[idx]:=Result;
+end;
+
 procedure TBulmaTabs.renderHTML;
 var
   buf: string;
@@ -566,7 +581,8 @@ end;
 
 function TBulmaMenuItem.renderHTML: string;
 begin
-  Result:='<li><a id="'+FItemID+'" href="#/docs/'+FItemID+'.md">'+FTitle+'</a></li>';
+  {Result:='<li><a id="'+FItemID+'" href="#/docs/'+FItemID+'.md">'+FTitle+'</a></li>';}
+  Result:='<li><a id="'+FItemID+'" href="#">'+FTitle+'</a></li>';
 end;
 
 procedure TBulmaMenuItem.Bind;

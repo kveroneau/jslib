@@ -266,6 +266,7 @@ end;
 procedure TJSONTable.CloseTable;
 begin
   FDataSet.Close;
+  FActive:=False;
 end;
 
 procedure TJSONTable.SetDates(AField: string; AValue: TDateTime);
