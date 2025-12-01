@@ -123,8 +123,8 @@ type
   public
     property ActiveTab: TBulmaTab read FActiveTab write SetActiveTab;
     property TabType: TBulmaTabType read FTabType write FTabType;
-    function AddTab(ATitle, ItemID: string; onClick: THTMLClickEventHandler): TBulmaTab;
-    function InsertTab(idx: Integer; ATitle, ItemID: string; onClick: THTMLClickEventHandler): TBulmaTab;
+    function AddTab(ATitle, ItemID: string; onClick: TBulmaAction): TBulmaTab;
+    function InsertTab(idx: Integer; ATitle, ItemID: string; onClick: TBulmaAction): TBulmaTab;
     procedure renderHTML;
   end;
 
@@ -534,7 +534,7 @@ begin
 end;
 
 function TBulmaTabs.InsertTab(idx: Integer; ATitle, ItemID: string;
-  onClick: THTMLClickEventHandler): TBulmaTab;
+  onClick: TBulmaAction): TBulmaTab;
 var
   i: Integer;
 begin
@@ -581,7 +581,6 @@ end;
 
 function TBulmaMenuItem.renderHTML: string;
 begin
-  {Result:='<li><a id="'+FItemID+'" href="#/docs/'+FItemID+'.md">'+FTitle+'</a></li>';}
   Result:='<li><a id="'+FItemID+'" href="#">'+FTitle+'</a></li>';
 end;
 
